@@ -77,7 +77,7 @@ class xcelMeter():
         self._mfid = details_dict['mfID']
         self._lfdi = details_dict['lFDI']
         self._swVer = details_dict['swVer']
-
+        logger.info(json.dumps(details_dict, indent=2))
         # Device info used for home assistant MQTT discovery
         self.device_info = {
                             "device": {
