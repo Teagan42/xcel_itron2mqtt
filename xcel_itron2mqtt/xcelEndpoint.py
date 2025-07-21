@@ -101,6 +101,7 @@ class xcelEndpoint():
         Returns: Tuple consisting of a string representing the mqtt
         topic, and a dict to be used as the payload.
         """
+        logger.info(json.dumps(details)
         payload = deepcopy(details)
         mqtt_friendly_name = self.name.replace(" ", "_")
         entity_type = payload.pop('entity_type')
@@ -115,6 +116,7 @@ class xcelEndpoint():
         # Capture the state topic the sensor is associated with for later use
         self._sensor_state_topics[sensor_name] = payload['state_topic']
         payload = json.dumps(payload)
+        logger.info(payload)
 
         return mqtt_topic, payload
 
@@ -124,6 +126,7 @@ class xcelEndpoint():
         easily setup the sensor/device once it appears over mqtt
         https://www.home-assistant.io/integrations/mqtt/
         """
+        logger.info(self.tags)
         _tags = deepcopy(self.tags)
         for k, v in _tags.items():
             if isinstance(v, list):
