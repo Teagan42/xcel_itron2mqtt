@@ -84,7 +84,7 @@ class xcelMeter():
     
     @property
     def mqtt_topic(self):
-        return f'{self.mqtt_topic_prefix}/device/energy/{self.name.replace(" ", "_").lower()}_${self._lfdi}
+        return f'{self.mqtt_topic_prefix}/device/energy/{self.name.replace(" ", "_").lower()}_${self._lfdi}'
 
     @property
     def name(self):
