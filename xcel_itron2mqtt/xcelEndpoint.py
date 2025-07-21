@@ -101,7 +101,7 @@ class xcelEndpoint():
         Returns: Tuple consisting of a string representing the mqtt
         topic, and a dict to be used as the payload.
         """
-        logger.info(json.dumps(details)
+        logger.info(json.dumps(details))
         payload = deepcopy(details)
         mqtt_friendly_name = self.name.replace(" ", "_")
         entity_type = payload.pop('entity_type')
