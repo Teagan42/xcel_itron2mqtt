@@ -62,6 +62,7 @@ class xcelEndpoint():
         in the endpoints.yaml
         """
         readings_dict = {}
+        logger.info(response)
         root = ET.fromstring(response)
         # Kinda gross
         for k, v in tags.items():
@@ -77,7 +78,7 @@ class xcelEndpoint():
                 if root.find(f'.//{IEEE_PREFIX}{k}') is not None:
                     value = root.find(f'.//{IEEE_PREFIX}{k}').text
                     readings_dict[k] = value
-    
+        logger.info(json.dumps(readings_dict, indent=2))
         return readings_dict
 
     def get_reading(self) -> dict:
