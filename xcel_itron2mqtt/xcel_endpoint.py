@@ -139,16 +139,16 @@ class XcelEndpoint():
         """
         logger.info(json.dumps(details))
         payload = deepcopy(details)
-        mqtt_friendly_name = f"{self.name.replace(" ", "_")}"
+        mqtt_friendly_name = f"{self.meter_name}_{self.name.replace(" ", "_")}"
         entity_type = payload.pop('entity_type')
-        payload["state_topic"] = f'{self.mqtt_topic_prefix}/{entity_type}/{self.meter_name}/{mqtt_friendly_name}/{sensor_name}/state'
+        payload["state_topic"] = f'{self.mqtt_topic_prefix}/{entity_type}/{mqtt_friendly_name}/{sensor_name}/state'
         payload['name'] = f'{self.name} {sensor_name} ({self.ldfi})'
         # Mouthful
         # Unique ID becomes the device name + class name + sensor name, all lower case, all underscores instead of spaces
-        payload['unique_id'] = f"{self.device_info['device']['name']}_{self.ldfi}_{self.name}_{sensor_name}".lower().replace(' ', '_')
+        payload['unique_id'] = f"{self.meter_name}_{self.name}_{sensor_name}".lower().replace(' ', '_')
         payload.update(self.device_info)
         # MQTT Topics don't like spaces
-        mqtt_topic = f'{self.mqtt_topic_prefix}/{entity_type}/{self.meter_name}/{mqtt_friendly_name}/{sensor_name}/config'
+        mqtt_topic = f'{self.mqtt_topic_prefix}/{entity_type}/{mqtt_friendly_name}/{sensor_name}/config'
         # Capture the state topic the sensor is associated with for later use
         self._sensor_state_topics[sensor_name] = payload['state_topic']
         logger.info(json.dumps(payload, indent=2))
