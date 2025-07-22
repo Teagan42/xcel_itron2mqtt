@@ -42,6 +42,7 @@ class CCM8Transport(httpx.AsyncHTTPTransport):
         ctx.check_hostname = False                     # CN vs IP? Yeah, we know.
         ctx.verify_mode = ssl.CERT_REQUIRED            # Still verify the chain.
         ctx.set_ciphers(CIPHERS)                       # Bring back ECDHE.
+        ctx.load_verify_locations(cafile=os.getenv('CERT_PATH'))  # Load the CA cert.
         return ctx
 
 # mDNS listener to find the IP Address of the meter on the network
