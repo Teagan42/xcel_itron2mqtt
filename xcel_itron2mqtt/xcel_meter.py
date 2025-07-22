@@ -136,10 +136,14 @@ class XcelMeter():
         # Build query objects for each endpoint
         return await asyncio.gather(*[
             XcelEndpoint.create_endpoint(
-                self.http_client, self.mqtt,
-                f'{self.url}{v["url"]}', self._lfdi,
-                endpoint_name, v["tags"],
-                device_info, self.mqtt_topic_prefix
+                self.http_client,
+                self.mqtt,
+                f'{self.url}{v["url"]}',
+                self._lfdi,
+                endpoint_name,
+                v["tags"],
+                device_info,
+                self.mqtt_topic_prefix
             )
             for point in endpoints
             for endpoint_name, v in point.items()
@@ -165,19 +169,18 @@ class XcelMeter():
 
         Returns: None
         """
-        state_topic = f'homeassistant/device/energy/{self.name.replace(" ", "_").lower()}'
         config_dict = {
             "name": self.name,
             "device_class": "energy",
-            "state_topic": state_topic,
+            "state_topic": self.mqtt_topic,
             "unique_id": self._lfdi
         }
         config_dict.update(self.device_info)
         config_json = json.dumps(config_dict)
         logging.debug("Sending MQTT Discovery Payload")
-        logging.debug(f"TOPIC: {state_topic}")
+        logging.debug(f"TOPIC: {self.mqtt_topic}")
         logging.debug(f"Config: {config_json}")
-        await self.mqtt.publish(state_topic, config_json.encode("utf-8"))
+        await self.mqtt.publish(self.mqtt_topic, config_json.encode("utf-8"))
 
     async def run(self) -> None:
         """
