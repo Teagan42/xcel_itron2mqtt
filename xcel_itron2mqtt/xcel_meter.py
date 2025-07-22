@@ -55,7 +55,7 @@ class XcelMeter():
 
     @property
     def mqtt_topic(self):
-        return f'{self.mqtt_topic_prefix}/device/energy/{self.name.replace(" ", "_").lower()}_${self._lfdi}'
+        return f'{self.mqtt_topic_prefix}/device/energy/{self.name.replace(" ", "_").lower()}'
 
     @property
     def name(self):
@@ -171,7 +171,7 @@ class XcelMeter():
             "device_class": "energy",
             "state_topic": state_topic,
             "unique_id": self._lfdi
-            }
+        }
         config_dict.update(self.device_info)
         config_json = json.dumps(config_dict)
         logging.debug("Sending MQTT Discovery Payload")
