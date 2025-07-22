@@ -156,7 +156,7 @@ def setup_mqtt(mqtt_server_address, mqtt_port) -> Mqtt:
 def setup_http_client(creds: tuple[str, str]) -> httpx.AsyncClient:
     logger.info(f"Setting up HTTP client with creds: {creds}")
     return httpx.AsyncClient(
-        transport=CCM8Transport(), cert=creds, timeout=10
+        transport=CCM8Transport(), cert=creds, verify="/config/certs/cert.pem", timeout=10
     )
 
 
