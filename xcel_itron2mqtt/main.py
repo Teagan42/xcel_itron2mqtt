@@ -44,7 +44,7 @@ class CCM8Transport(httpx.AsyncHTTPTransport):
         ctx.set_ciphers("ALL:@SECLEVEL=0")       # unleash the horror
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
-        ctx.load_cert_chain(certfile=os.environ.get('CERT_PATH', ''), keyfile=os.environ.get("key.pem", ''))
+        ctx.load_cert_chain(certfile=os.environ.get('CERT_PATH', ''), keyfile=os.environ.get('KEY_PATH', ''))
         # ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
         # ctx.check_hostname = False                     # CN vs IP? Yeah, we know.
         # ctx.verify_mode = ssl.CERT_REQUIRED            # Still verify the chain.
