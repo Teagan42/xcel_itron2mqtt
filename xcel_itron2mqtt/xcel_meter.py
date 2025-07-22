@@ -33,7 +33,7 @@ class XcelMeter():
         self._mfid = ""
         self._lfdi = ""
         self._swVer = ""
-        self._mqtt_prefix = mqtt_prefix or ""
+        self._mqtt_prefix = mqtt_prefix or "homeassistant/"
         self.POLLING_RATE = 5.0
         # Base URL used to query the meter
         self.url = f'https://{ip_address}:{port}'
