@@ -164,6 +164,8 @@ async def main() -> None:
     try:
         async with TaskGroup() as group:
             for meter in os.environ.get("METERS", "").split("|"):
+                if not meter or ":" not in meter:
+                    continue
                 ip_address = meter.split(':')[0]
                 port_num = int(meter.split(':')[1])
                 meter = XcelMeter(
