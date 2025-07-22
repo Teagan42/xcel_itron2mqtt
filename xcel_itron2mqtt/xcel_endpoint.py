@@ -1,38 +1,53 @@
-import yaml
-import os
+import asyncio
 import json
 import httpx
 import logging
-import paho.mqtt.client as mqtt
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from tenacity import retry, stop_after_attempt, before_sleep_log, wait_exponential
-from types import PublishFn
+from mqtt import Mqtt
 
 logger = logging.getLogger(__name__)
 
 # Prefix that appears on all of the XML elements
 IEEE_PREFIX = '{urn:ieee:std:2030.5:ns}'
 
-class xcelEndpoint():
+class XcelEndpoint():
     """
     Class wrapper for all readings associated with the Xcel meter.
     Expects a request session that should be shared amongst the 
     instances.
     """
+    @staticmethod
+    async def create_endpoint(
+        http_client: httpx.AsyncClient,
+        mqtt: Mqtt,
+        url: str,
+        ldfi: str,
+        name: str,
+        tags: dict,
+        device_info: dict,
+        mqtt_prefix: str
+    ) -> "XcelEndpoint":
+        endpoint = XcelEndpoint(
+            http_client, mqtt, url, ldfi, name, tags, device_info, mqtt_prefix
+        )
+        await endpoint.mqtt_send_config()
+        return endpoint
+
     def __init__(
         self,
         http_client: httpx.AsyncClient,
-        mqtt_publish: PublishFn, 
+        mqtt: Mqtt, 
         url: str,
-        ldfi: str
+        ldfi: str,
         name: str,
-        tags: list,
+        tags: dict,
         device_info: dict,
         mqtt_prefix: str
     ):
-        self.requests_session = http_client
-        self.publish = mqtt_publish
+        self.session = http_client
+        self.mqtt = mqtt
         self.url = url
         self.ldfi = ldfi
         self.name = name
@@ -44,9 +59,6 @@ class xcelEndpoint():
         self._mqtt_topic = None
         # Record all of the sensor state topics in an easy to lookup dict
         self._sensor_state_topics = {}
-
-        # Setup the rest of what we need for this endpoint
-        self.mqtt_send_config()
 
     @property
     def mqtt_topic_prefix(self):
@@ -66,8 +78,8 @@ class xcelEndpoint():
 
         Returns: str in XML format of the meter's response
         """
-        async with self.http_client.get(self.url, verify=False, timeout=15.0) as resp:
-            return resp.text
+        resp = await self.session.get(self.url, timeout=15.0)
+        return resp.text
 
     @staticmethod
     def parse_response(response: str, tags: dict) -> dict:
@@ -85,15 +97,19 @@ class xcelEndpoint():
         for k, v in tags.items():
             if isinstance(v, list):
                 for val_items in v:
-                    for k2, v2 in val_items.items():
+                    if not isinstance(val_items, dict):
+                        continue
+                    for k2 in val_items.keys():
                         search_val = f'{IEEE_PREFIX}{k2}'
-                        if root.find(f'.//{search_val}') is not None:
-                            value = root.find(f'.//{search_val}').text
+                        element = root.find(f".//{search_val}")
+                        if element is not None:
+                            value = element.text
                             readings_dict[f'{k}{k2}'] = value
             else:
                 search_val = f'{IEEE_PREFIX}{k}'
-                if root.find(f'.//{IEEE_PREFIX}{k}') is not None:
-                    value = root.find(f'.//{IEEE_PREFIX}{k}').text
+                element = root.find(f".//{search_val}")
+                if element is not None:
+                    value = element.text
                     readings_dict[k] = value
         logger.info(json.dumps(readings_dict, indent=2))
         return readings_dict
@@ -132,8 +148,7 @@ class xcelEndpoint():
         mqtt_topic = f'{self.mqtt_topic_prefix}{entity_type}/{mqtt_friendly_name}/{sensor_name}/config'
         # Capture the state topic the sensor is associated with for later use
         self._sensor_state_topics[sensor_name] = payload['state_topic']
-        payload = json.dumps(payload)
-        logger.info(payload)
+        logger.info(json.dumps(payload, indent=2))
 
         return mqtt_topic, payload
 
@@ -150,7 +165,7 @@ class xcelEndpoint():
             sensor_name = f'{k}{name}'
             mqtt_topic, payload = self.create_config(sensor_name, details)
             # Send MQTT payload
-            await self.publish(mqtt_topic, str(payload))
+            await self.mqtt_publish(mqtt_topic, payload)
         async def process_list(k, v):
             await asyncio.gather(*[
                 process_list_item(k, v_item)
@@ -158,9 +173,10 @@ class xcelEndpoint():
                 in v
             ])
         async def process_obj(k, v):
-            name_suffix = f'{k[0].upper()}'
             mqtt_topic, payload = self.create_config(k, v)
-            await self.publish(mqtt_topic, str(payload), retain=True)
+            await self.mqtt_publish(
+                mqtt_topic, payload, retain=True
+            )
 
         await asyncio.gather(*[
             process_list(k, v) if isinstance(v, list) else process_obj(k, v)
@@ -191,22 +207,15 @@ class xcelEndpoint():
             for topic, payload
             in mqtt_topic_message.items()
         ])
-        
 
-    async def mqtt_publish(self, topic: str, message: str, retain=False) -> int:
+    async def mqtt_publish(self, topic: str, message: str | dict, retain=False) -> None:
         """
         Publish the given message to the topic associated with the class
        
         Returns: integer
         """
-        result = [0]
-        #print(f"Sending to MQTT TOPIC:\t{topic}")
-        #print(f"Payload:\t\t{message}")
-        result = await self.publish(topic, str(message), retain=retain)
-        #print('Error in sending MQTT payload')
-        #print(f"MQTT Send Result: \t\t{result}")
-        # Return status of the published message
-        return result[0]
+        payload = json.dumps(message) if isinstance(message, dict) else message
+        await self.mqtt.publish(topic, payload.encode("utf-8"), retain=retain)
 
     async def run(self) -> None:
         """

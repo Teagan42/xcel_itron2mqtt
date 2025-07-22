@@ -1,17 +1,21 @@
 import os
 import logging
-import paho.mqtt.client as mqtt
-from time import sleep
+from zeroconf import ServiceListener, Zeroconf
 from pathlib import Path
-from xcelMeter import xcelMeter
+import ssl
+from xcel_meter import XcelMeter
 import asyncio
 from asyncio import TaskGroup
-from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
+# from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
 import httpx
-
+from mqtt import Mqtt
 from common import TerminateTaskGroup
 
 INTEGRATION_NAME = "Xcel Itron 5 (2)"
+
+CIPHERS = (
+    "ECDHE+AESGCM:ECDHE+CHACHA20:ECDHE+AES256:ECDHE+AES128:!aNULL:!MD5:!DSS"
+)
 
 LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 logging.basicConfig(format='%(levelname)s: %(message)s', level=LOGLEVEL)
@@ -53,6 +57,7 @@ class XcelListener(ServiceListener):
     def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
         self.info = zc.get_service_info(type_, name)
         print(f"Service {name} added, service info: {self.info}")
+
 
 def look_for_creds() -> tuple:
     """
@@ -103,7 +108,7 @@ def look_for_creds() -> tuple:
 #     port = listener.info.port
 #     # Close out our mDNS discovery device
 #     zeroconf.close()
-  
+
 #     return ip_address, port
 
 
@@ -128,69 +133,54 @@ def get_mqtt_host() -> str:
 
     Returns: str
     """
-    env_host = os.getenv.get('MQTT_SERVER', None)
+    env_host = os.environ.get('MQTT_SERVER', None)
     if not env_host:
         raise ValueError('Must specify the MQTT_SERVER env.')
     return env_host
 
 
-def setup_mqtt(mqtt_server_address, mqtt_port) -> mqtt.Client:
+def setup_mqtt(mqtt_server_address, mqtt_port) -> Mqtt:
     """
     Creates a new mqtt client to be used for the the xcelQuery
     objects.
 
     Returns: mqtt.Client object
     """
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            logging.info("Connected to MQTT Broker!")
-        else:
-            logging.error("Failed to connect, return code %d\n", rc)
-
     # Check if a username/PW is setup for the MQTT connection
     mqtt_username = os.getenv('MQTT_USER')
     mqtt_password = os.getenv('MQTT_PASSWORD')
-    # If no env variable was set, skip setting creds?
-    client = mqtt.Client()
-    if mqtt_username and mqtt_password:
-        client.username_pw_set(mqtt_username, mqtt_password)
-    client.on_connect = on_connect
-    client.connect(mqtt_server_address, mqtt_port)
-    client.loop_start()
-
-    return client
-
+    return Mqtt(mqtt_server_address, mqtt_port, mqtt_username, mqtt_password)
 
 def setup_http_client() -> httpx.AsyncClient:
-    return httpx.AsyncClient(transport=CCM8Transport)
+    return httpx.AsyncClient(transport=CCM8Transport())
 
 
 async def main() -> None:
-    setup_mqtt(get_mqtt_host(), get_mqtt_port())
+    mqtt_client =setup_mqtt(get_mqtt_host(), get_mqtt_port())
     creds = look_for_creds()
     http_client = setup_http_client()
     if not os.environ.get('METERS', None):
         raise ValueError("Expected METERS env to be pipe separate list of `ip:port` specifications for each meter to poll.")
     try:
-         async with TaskGroup() as group:
-            for meter in os.getenv('METERS').split('|'):
+        async with TaskGroup() as group:
+            for meter in os.environ.get("METERS", "").split("|"):
                 ip_address = meter.split(':')[0]
-                port_num = meter.split(':')[1]
-                meter = xcelMeter(
+                port_num = int(meter.split(':')[1])
+                meter = XcelMeter(
                     INTEGRATION_NAME,
                     ip_address,
                     port_num,
                     creds,
+                    mqtt_client,
                     http_client,
-                    os.environ.get('MQTT_TOPIC_PREFIX', None)
+                    os.environ.get("MQTT_TOPIC_PREFIX", None),
                 )
-                meter.setup()
+                await meter.setup()
 
                 if meter.initalized:
                     group.create_task(meter.run())
     except* TerminateTaskGroup:
         pass
-    
 
 
 if __name__ == '__main__':
