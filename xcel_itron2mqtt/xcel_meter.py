@@ -59,7 +59,7 @@ class XcelMeter():
 
     @property
     def name(self):
-        return f"{self._name} ({self._lfdi})"
+        return self._name
 
     @retry(stop=stop_after_attempt(15),
            wait=wait_exponential(multiplier=1, min=1, max=15),
