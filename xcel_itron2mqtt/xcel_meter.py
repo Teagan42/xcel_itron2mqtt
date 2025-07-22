@@ -139,7 +139,7 @@ class XcelMeter():
             for endpoint_name, v in point.items():
                 request_url = f'{self.url}{v["url"]}'
                 query_obj.append(
-                    XcelEndpoint(
+                    XcelEndpoint.create_endpoint(
                         self.http_client,
                         self.mqtt,
                         request_url,
