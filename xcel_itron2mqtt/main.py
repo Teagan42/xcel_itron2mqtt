@@ -18,8 +18,13 @@ CIPHERS = (
     "ECDHE" #+AESGCM:ECDHE+CHACHA20:ECDHE+AES256:ECDHE+AES128:!aNULL:!MD5:!DSS"
 )
 
-LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
-logging.basicConfig(format='%(levelname)s: %(message)s', level=LOGLEVEL)
+LOGLEVEL = os.environ.get('LOGLEVEL', 'DEBUG').upper()
+logging.getLogger("amqtt").setLevel(logging.DEBUG)
+logging.basicConfig(
+    level=LOGLEVEL,
+    format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%SZ'
+)
 logger = logging.getLogger(__name__)
 
 

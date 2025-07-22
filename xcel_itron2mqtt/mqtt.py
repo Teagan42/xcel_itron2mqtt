@@ -34,6 +34,13 @@ class Mqtt:
                 },
             },
         )
+        original_disconnect = self.client.disconnect
+
+        async def traced_disconnect(*args, **kwargs):
+            logger.warning("AMQTT client initiated disconnect")
+            return await original_disconnect(*args, **kwargs)
+
+        self.client.disconnect = traced_disconnect
         self._watchdog_task = None
         self.connected = False
 
