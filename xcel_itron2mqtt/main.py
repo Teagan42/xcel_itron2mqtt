@@ -1,15 +1,16 @@
-import os
-import logging
-from zeroconf import ServiceListener, Zeroconf
-from pathlib import Path
-import ssl
-from xcel_meter import XcelMeter
 import asyncio
+import logging
+import os
+import ssl
 from asyncio import TaskGroup
+from pathlib import Path
+
 # from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
 import httpx
-from mqtt import Mqtt
 from common import TerminateTaskGroup
+from mqtt import Mqtt
+from xcel_meter import XcelMeter
+from zeroconf import ServiceListener, Zeroconf
 
 INTEGRATION_NAME = "Xcel Itron 5 (2)"
 
@@ -43,7 +44,7 @@ class CCM8Transport(httpx.AsyncHTTPTransport):
         ctx.set_ciphers("ALL:@SECLEVEL=0")       # unleash the horror
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
-        ctx.load_cert_chain(certfile="cert.pem", keyfile="key.pem")
+        ctx.load_cert_chain(certfile=os.environ.get('CERT_PATH', ''), keyfile=os.environ.get("key.pem", ''))
         # ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
         # ctx.check_hostname = False                     # CN vs IP? Yeah, we know.
         # ctx.verify_mode = ssl.CERT_REQUIRED            # Still verify the chain.
