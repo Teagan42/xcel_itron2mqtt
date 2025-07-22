@@ -181,14 +181,22 @@ async def main() -> None:
     if not os.environ.get('METERS', None):
         raise ValueError("Expected METERS env to be pipe separate list of `ip:port` specifications for each meter to poll.")
     try:
+        meter_index = 0
         async with TaskGroup() as group:
             for meter in os.environ.get("METERS", "").split("|"):
                 if not meter or ":" not in meter:
                     continue
+                if "@" in meter:
+                    name = meter.split("@")[0]
+                    meter = meter.split("@")[1]
+                else:
+                    name = f"Xcel Meter {meter_index}"
+                    meter_index += 1
+                logger.info(f"Setting up meter {name} at {meter}.")
                 ip_address = meter.split(':')[0]
                 port_num = int(meter.split(':')[1])
                 meter = XcelMeter(
-                    INTEGRATION_NAME,
+                    name,
                     ip_address,
                     port_num,
                     creds,
