@@ -163,7 +163,8 @@ def setup_mqtt(mqtt_server_address, mqtt_port) -> Mqtt:
     # Check if a username/PW is setup for the MQTT connection
     mqtt_username = os.getenv('MQTT_USER')
     mqtt_password = os.getenv('MQTT_PASSWORD')
-    return Mqtt(mqtt_server_address, mqtt_port, mqtt_username, mqtt_password)
+    mqtt_client_id = os.getenv('MQTT_CLIENT_ID', None)
+    return Mqtt(mqtt_server_address, mqtt_port, mqtt_client_id, mqtt_username, mqtt_password)
 
 
 def setup_http_client(creds: tuple[str, str]) -> httpx.AsyncClient:
