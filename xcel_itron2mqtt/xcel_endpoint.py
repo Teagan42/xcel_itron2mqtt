@@ -27,10 +27,11 @@ class XcelEndpoint():
         name: str,
         tags: dict,
         device_info: dict,
-        mqtt_prefix: str
+        mqtt_prefix: str,
+        meter_name: str
     ) -> "XcelEndpoint":
         endpoint = XcelEndpoint(
-            http_client, mqtt, url, ldfi, name, tags, device_info, mqtt_prefix
+            http_client, mqtt, url, ldfi, name, tags, device_info, mqtt_prefix, meter_name
         )
         await endpoint.mqtt_send_config()
         return endpoint
@@ -44,7 +45,8 @@ class XcelEndpoint():
         name: str,
         tags: dict,
         device_info: dict,
-        mqtt_prefix: str
+        mqtt_prefix: str,
+        meter_name: str
     ):
         self.session = http_client
         self.mqtt = mqtt
@@ -53,6 +55,7 @@ class XcelEndpoint():
         self.name = name
         self.tags = tags
         self.device_info = device_info
+        self.meter_name = meter_name.replace(" ", "_").lower()
         self._mqtt_topic_prefix = mqtt_prefix
 
         self._current_response = None
@@ -138,14 +141,14 @@ class XcelEndpoint():
         payload = deepcopy(details)
         mqtt_friendly_name = f"{self.name.replace(" ", "_")}"
         entity_type = payload.pop('entity_type')
-        payload["state_topic"] = f'{self.mqtt_topic_prefix}/{entity_type}/{mqtt_friendly_name}/{sensor_name}/state'
+        payload["state_topic"] = f'{self.mqtt_topic_prefix}/{entity_type}/{self.meter_name}/{mqtt_friendly_name}/{sensor_name}/state'
         payload['name'] = f'{self.name} {sensor_name} ({self.ldfi})'
         # Mouthful
         # Unique ID becomes the device name + class name + sensor name, all lower case, all underscores instead of spaces
         payload['unique_id'] = f"{self.device_info['device']['name']}_{self.ldfi}_{self.name}_{sensor_name}".lower().replace(' ', '_')
         payload.update(self.device_info)
         # MQTT Topics don't like spaces
-        mqtt_topic = f'{self.mqtt_topic_prefix}/{entity_type}/{mqtt_friendly_name}/{sensor_name}/config'
+        mqtt_topic = f'{self.mqtt_topic_prefix}/{entity_type}/{self.meter_name}/{mqtt_friendly_name}/{sensor_name}/config'
         # Capture the state topic the sensor is associated with for later use
         self._sensor_state_topics[sensor_name] = payload['state_topic']
         logger.info(json.dumps(payload, indent=2))

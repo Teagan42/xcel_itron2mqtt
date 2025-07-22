@@ -143,7 +143,8 @@ class XcelMeter():
                 endpoint_name,
                 v["tags"],
                 device_info,
-                self.mqtt_topic_prefix
+                self.mqtt_topic_prefix,
+                self.name
             )
             for point in endpoints
             for endpoint_name, v in point.items()
