@@ -1,6 +1,7 @@
 import asyncio
 from typing import Callable
 import logging
+from uuid import uuid4
 from amqtt.client import MQTTClient
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ class Mqtt:
     ) -> None:
         self._connect_lock = asyncio.Lock()
         self.client = MQTTClient(
-            client_id,
+            client_id or username or uuid4().hex,
             config={
                 "clean_start": True,
                 "keep_alive": 60,
