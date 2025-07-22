@@ -201,6 +201,10 @@ class XcelEndpoint():
             # Create dict of {topic: payload}
             mqtt_topic_message[topic] = v
 
+        logger.info(
+            f"Sending MQTT payloads: {json.dumps(mqtt_topic_message, indent=2)}"
+        )
+
         # Cycle through and send the payload to the associated keys
         await asyncio.gather(*[
             self.mqtt_publish(topic, payload)
