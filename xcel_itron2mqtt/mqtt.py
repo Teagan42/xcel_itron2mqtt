@@ -26,8 +26,6 @@ class Mqtt:
                 "reconnect_delay": 10,
                 "reconnect_delay_max": 60,
                 "reconnect_delay_jitter": 0.1,
-                "will": None,
-                "properties": None,
                 "protocol": "MQTTv311",
                 "broker": {
                     "uri": f'mqtt{"s" if port == 8883 else ""}://{username if username else ""}:{password if password else ""}@{broker}:{port}',
