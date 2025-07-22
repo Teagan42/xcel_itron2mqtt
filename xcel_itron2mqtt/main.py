@@ -152,7 +152,7 @@ def setup_mqtt(mqtt_server_address, mqtt_port) -> Mqtt:
     return Mqtt(mqtt_server_address, mqtt_port, mqtt_username, mqtt_password)
 
 def setup_http_client() -> httpx.AsyncClient:
-    return httpx.AsyncClient(transport=CCM8Transport())
+    return httpx.AsyncClient(transport=CCM8Transport(), verify=False)
 
 
 async def main() -> None:
