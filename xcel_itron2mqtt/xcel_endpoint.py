@@ -168,7 +168,7 @@ class XcelEndpoint():
             sensor_name = f'{k}{name}'
             mqtt_topic, payload = self.create_config(sensor_name, details)
             # Send MQTT payload
-            await self.mqtt_publish(mqtt_topic, payload)
+            await self.mqtt_publish(mqtt_topic, payload, retain=True)
         async def process_list(k, v):
             await asyncio.gather(*[
                 process_list_item(k, v_item)
