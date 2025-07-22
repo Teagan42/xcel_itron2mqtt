@@ -187,10 +187,13 @@ class XcelMeter():
 
         Returns: None
         """
-        while True:
-            await asyncio.sleep(self.POLLING_RATE)
-            await asyncio.gather(*[
-                obj.run()
-                for obj
-                in self.endpoints
-            ])
+        try:
+            while True:
+                await asyncio.sleep(self.POLLING_RATE)
+                await asyncio.gather(*[
+                    obj.run()
+                    for obj
+                    in self.endpoints
+                ])
+        except asyncio.CancelledError:
+            await self.mqtt.disconnect()
