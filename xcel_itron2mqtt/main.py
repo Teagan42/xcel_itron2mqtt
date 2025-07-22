@@ -154,7 +154,7 @@ def setup_mqtt(mqtt_server_address, mqtt_port) -> Mqtt:
 
 def setup_http_client(creds: tuple[str, str]) -> httpx.AsyncClient:
     return httpx.AsyncClient(
-        transport=CCM8Transport(), verify=False, cert=creds, timeout=10
+        transport=CCM8Transport(), cert=creds, timeout=10
     )
 
 
