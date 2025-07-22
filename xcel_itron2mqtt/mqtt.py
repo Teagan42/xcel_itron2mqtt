@@ -1,5 +1,8 @@
 from typing import Callable
+import logging
 from amqtt.client import MQTTClient
+
+logger = logging.getLogger(__name__)
 
 class Mqtt:
     def __init__(
@@ -38,7 +41,8 @@ class Mqtt:
             await self.client.connect()
             self.connected = True
         except Exception as e:
-            print(f'Error connecting to MQTT broker: {e}')
+            logger.error(f"Error connecting to MQTT broker: {e}", exc_info=True, stack_info=True)
+            logger.error(e)
 
     async def publish(
             self,
