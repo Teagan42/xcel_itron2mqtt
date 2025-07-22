@@ -151,14 +151,17 @@ def setup_mqtt(mqtt_server_address, mqtt_port) -> Mqtt:
     mqtt_password = os.getenv('MQTT_PASSWORD')
     return Mqtt(mqtt_server_address, mqtt_port, mqtt_username, mqtt_password)
 
-def setup_http_client() -> httpx.AsyncClient:
-    return httpx.AsyncClient(transport=CCM8Transport(), verify=False)
+
+def setup_http_client(creds: tuple[str, str]) -> httpx.AsyncClient:
+    return httpx.AsyncClient(
+        transport=CCM8Transport(), verify=False, cert=creds, timeout=10
+    )
 
 
 async def main() -> None:
     mqtt_client =setup_mqtt(get_mqtt_host(), get_mqtt_port())
     creds = look_for_creds()
-    http_client = setup_http_client()
+    http_client = setup_http_client(creds)
     if not os.environ.get('METERS', None):
         raise ValueError("Expected METERS env to be pipe separate list of `ip:port` specifications for each meter to poll.")
     try:
