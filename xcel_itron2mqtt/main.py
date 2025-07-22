@@ -38,11 +38,17 @@ class CCM8Transport(httpx.AsyncHTTPTransport):
 
     @staticmethod
     def _create_ssl_context() -> ssl.SSLContext:
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-        ctx.check_hostname = False                     # CN vs IP? Yeah, we know.
-        ctx.verify_mode = ssl.CERT_REQUIRED            # Still verify the chain.
-        ctx.set_ciphers(CIPHERS)                       # Bring back ECDHE.
-        ctx.load_verify_locations(cafile=os.getenv('CERT_PATH'))  # Load the CA cert.
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        ctx.options &= ~ssl.OP_NO_RENEGOTIATION  # allow unsafe legacy renegotiation
+        ctx.set_ciphers("ALL:@SECLEVEL=0")       # unleash the horror
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        ctx.load_cert_chain(certfile="cert.pem", keyfile="key.pem")
+        # ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        # ctx.check_hostname = False                     # CN vs IP? Yeah, we know.
+        # ctx.verify_mode = ssl.CERT_REQUIRED            # Still verify the chain.
+        # ctx.set_ciphers(CIPHERS)                       # Bring back ECDHE.
+        # ctx.load_verify_locations(cafile=os.getenv('CERT_PATH'))  # Load the CA cert.
         return ctx
 
 # mDNS listener to find the IP Address of the meter on the network
