@@ -19,6 +19,7 @@ CIPHERS = (
 
 LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 logging.basicConfig(format='%(levelname)s: %(message)s', level=LOGLEVEL)
+logger = logging.getLogger(__name__)
 
 
 class CCM8Transport(httpx.AsyncHTTPTransport):
@@ -153,6 +154,7 @@ def setup_mqtt(mqtt_server_address, mqtt_port) -> Mqtt:
 
 
 def setup_http_client(creds: tuple[str, str]) -> httpx.AsyncClient:
+    logger.info(f"Setting up HTTP client with creds: {creds}")
     return httpx.AsyncClient(
         transport=CCM8Transport(), cert=creds, timeout=10
     )
