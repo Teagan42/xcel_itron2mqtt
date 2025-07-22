@@ -78,13 +78,14 @@ class XcelMeter():
         logger.info(json.dumps(details_dict, indent=2))
         # Device info used for home assistant MQTT discovery
         self.device_info = {
-                            "device": {
-                                "identifiers": [self._lfdi],
-                                "name": self.name,
-                                "model": self._mfid,
-                                "sw_version": self._swVer
-                                }
-                            }
+            "device": {
+                "identifiers": [self._lfdi],
+                "name": self.name,
+                "model": self._mfid,
+                "sw_version": self._swVer,
+                "manufacturer": "Itron",
+            }
+        }
         # Send homeassistant a new device config for the meter
         await self.send_mqtt_config()
 

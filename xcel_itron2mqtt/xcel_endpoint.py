@@ -142,7 +142,7 @@ class XcelEndpoint():
         mqtt_friendly_name = f"{self.meter_name}_{self.name.replace(" ", "_")}"
         entity_type = payload.pop('entity_type')
         payload["state_topic"] = f'{self.mqtt_topic_prefix}/{entity_type}/{mqtt_friendly_name}/{sensor_name}/state'
-        payload['name'] = f'{self.name} {sensor_name} ({self.ldfi})'
+        payload["name"] = f"{self.meter_name} {self.name} {sensor_name}"
         # Mouthful
         # Unique ID becomes the device name + class name + sensor name, all lower case, all underscores instead of spaces
         payload['unique_id'] = f"{self.meter_name}_{self.name}_{sensor_name}".lower().replace(' ', '_')
