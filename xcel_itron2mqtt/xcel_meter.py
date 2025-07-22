@@ -94,7 +94,7 @@ class XcelMeter():
         endpoints_list = self.load_endpoints(f'configs/endpoints_{endpoints_file_ver}.yaml')
 
         # create endpoints from list
-        self.endpoints = self.create_endpoints(endpoints_list, self.device_info)
+        self.endpoints = await self.create_endpoints(endpoints_list, self.device_info)
 
         # ready to go
         self.initalized = True
@@ -130,27 +130,20 @@ class XcelMeter():
 
         return endpoints
 
-    def create_endpoints(
+    async def create_endpoints(
         self, endpoints: list[dict], device_info: dict
     ) -> list[XcelEndpoint]:
         # Build query objects for each endpoint
-        query_obj = []
-        for point in endpoints:
-            for endpoint_name, v in point.items():
-                request_url = f'{self.url}{v["url"]}'
-                query_obj.append(
-                    XcelEndpoint.create_endpoint(
-                        self.http_client,
-                        self.mqtt,
-                        request_url,
-                        self._lfdi,
-                        endpoint_name,
-                        v['tags'],
-                        device_info,
-                        self.mqtt_topic_prefix
-                    )
-                )
-        return query_obj
+        return await asyncio.gather(*[
+            XcelEndpoint.create_endpoint(
+                self.http_client, self.mqtt,
+                f'{self.url}{v["url"]}', self._lfdi,
+                endpoint_name, v["tags"],
+                device_info, self.mqtt_topic_prefix
+            )
+            for point in endpoints
+            for endpoint_name, v in point.items()
+        ])
 
     # Send MQTT config setup to Home assistant
     async def send_configs(self):
